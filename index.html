@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Колода из 12 карт</title>
+  <title>Карточная игра</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Изменение фона на цвет */
     body {
-      background-color: #1e1e1e; /* Измените на нужный вам цвет */
+      background-color: #1e1e1e;
     }
 
     .card-animate {
@@ -48,45 +47,68 @@
 </head>
 <body class="text-white flex flex-col items-center justify-center min-h-screen">
 
-  <div class="text-center">
-    <!-- Колода -->
-    <img
-      id="deck"
-      src="images/back.png"
-      alt="Колода"
-      class="w-40 h-auto cursor-pointer rounded-xl shadow-lg mb-2 hover:scale-105 transition duration-300"
-    />
+  <!-- Стартовый экран -->
+  <div id="start-screen" class="flex flex-col items-center space-y-4">
+    <h1 class="text-2xl font-bold mb-4">Выберите количество игроков</h1>
+    <div class="flex space-x-4">
+      <button class="bg-blue-600 px-4 py-2 rounded" onclick="startGame(2)">2 игрока</button>
+      <button class="bg-blue-600 px-4 py-2 rounded" onclick="startGame(3)">3 игрока</button>
+      <button class="bg-blue-600 px-4 py-2 rounded" onclick="startGame(4)">4 игрока</button>
+      <button class="bg-blue-600 px-4 py-2 rounded" onclick="startGame(5)">5 игроков</button>
+    </div>
+  </div>
 
-    <!-- Счётчик -->
+  <!-- Игровой экран -->
+  <div id="game-screen" class="hidden flex flex-col items-center">
+    <img id="deck" src="images/back.png" alt="Колода"
+      class="w-40 h-auto cursor-pointer rounded-xl shadow-lg mb-2 hover:scale-105 transition duration-300" />
     <div id="counter" class="text-lg font-medium mb-4">Осталось карт: 12</div>
 
-    <!-- Кнопка сброса -->
-    <button
-      id="reset"
-      class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-xl shadow mb-8 transition"
-    >
-      Сбросить колоду
-    </button>
+    <div class="flex space-x-4 mb-6">
+      <button id="reset"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-xl shadow transition">
+        Сбросить колоду
+      </button>
+      <button id="back"
+        class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-xl shadow transition">
+        Назад к выбору
+      </button>
+    </div>
 
-    <!-- Контейнер для вытянутых карт -->
     <div id="cards" class="grid grid-cols-4 gap-6 justify-center px-4"></div>
   </div>
 
   <script>
-    const deck = document.getElementById('deck');
-    const resetBtn = document.getElementById('reset');
-    const cardsContainer = document.getElementById('cards');
-    const counter = document.getElementById('counter');
-
     const fullDeck = Array.from({ length: 24 }, (_, i) => `images/card${i + 1}.png`);
     let remainingDeck = [...fullDeck];
 
-    const players = ['Миша', 'Ваня', 'Макс', 'Валера'];
+    const deck = document.getElementById('deck');
+    const resetBtn = document.getElementById('reset');
+    const backBtn = document.getElementById('back');
+    const cardsContainer = document.getElementById('cards');
+    const counter = document.getElementById('counter');
+    const startScreen = document.getElementById('start-screen');
+    const gameScreen = document.getElementById('game-screen');
+
+    let players = [];
     let currentPlayerIndex = 0;
     let drawnInSet = 0;
+    let cardsPerSet = 4;
 
     function updateCounter() {
       counter.textContent = `Осталось карт: ${remainingDeck.length}`;
+    }
+
+    function startGame(playerCount) {
+      players = ['Миша', 'Ваня', 'Макс', 'Валера', 'Саша'].slice(0, playerCount);
+      cardsPerSet = playerCount;
+      remainingDeck = [...fullDeck];
+      currentPlayerIndex = 0;
+      drawnInSet = 0;
+      cardsContainer.innerHTML = '';
+      startScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      updateCounter();
     }
 
     deck.addEventListener('click', () => {
@@ -95,8 +117,7 @@
         return;
       }
 
-      if (drawnInSet === 4) {
-        // Просто удаляем карты, без анимации
+      if (drawnInSet === cardsPerSet) {
         cardsContainer.innerHTML = '';
         drawnInSet = 0;
       }
@@ -104,7 +125,6 @@
       const index = Math.floor(Math.random() * remainingDeck.length);
       const cardSrc = remainingDeck.splice(index, 1)[0];
 
-      // Создаём обёртку с подписью и картой
       const wrapper = document.createElement('div');
       wrapper.className = 'flex flex-col items-center card-wrapper';
 
@@ -112,18 +132,15 @@
       label.textContent = players[currentPlayerIndex];
       label.className = 'mb-2 text-sm text-gray-300';
 
-      // Обёртка для карты с эффектом переворота
       const cardContent = document.createElement('div');
       cardContent.className = 'card-content card-animate';
 
       const cardFront = document.createElement('img');
       cardFront.src = cardSrc;
-      cardFront.alt = 'Карта';
       cardFront.className = 'rounded-xl shadow-md w-full h-full card-front';
 
       const cardBack = document.createElement('img');
-      cardBack.src = 'images/back.png'; // Рубашка карты
-      cardBack.alt = 'Рубашка';
+      cardBack.src = 'images/back.png';
       cardBack.className = 'rounded-xl shadow-md w-full h-full card-back';
 
       cardContent.appendChild(cardFront);
@@ -132,7 +149,6 @@
       wrapper.appendChild(cardContent);
       cardsContainer.appendChild(wrapper);
 
-      // Запускаем анимацию появления
       setTimeout(() => {
         cardContent.classList.add('card-show');
       }, 10);
@@ -150,8 +166,15 @@
       updateCounter();
     });
 
-    updateCounter();
+    backBtn.addEventListener('click', () => {
+      gameScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+      remainingDeck = [...fullDeck];
+      cardsContainer.innerHTML = '';
+      currentPlayerIndex = 0;
+      drawnInSet = 0;
+      updateCounter();
+    });
   </script>
-
 </body>
 </html>
